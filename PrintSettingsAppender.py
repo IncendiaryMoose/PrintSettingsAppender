@@ -49,7 +49,7 @@ class PrintSettingsAppender(Extension):
         for definition_file_path in self.definition_file_paths:
             settings: dict[str, dict[str, Any]] = {}
 
-            with definition_file_path.open("r") as settings_def:
+            with definition_file_path.open("r", encoding="utf-8") as settings_def:
                 settings = json_load(settings_def)
 
             self.all_settings.append(settings)
