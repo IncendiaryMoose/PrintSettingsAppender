@@ -1,0 +1,7 @@
+{
+    "name": "Print Setting Appender",
+    "author": "Incendiary Moose",
+    "version": "0.0.1",
+    "description": "Add new print settings",
+    "supported_sdk_versions": ["8.10.0"]
+}

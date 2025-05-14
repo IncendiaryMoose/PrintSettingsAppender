@@ -1,0 +1,50 @@
+{
+    "my_plugin":
+    {
+        "label": "My Plugin Category Name",
+        "type": "category",
+        "description": "Does Stuff",
+        "icon": "Experiment",
+        "children":
+        {
+            "my_plugin_setting_1":
+            {
+                "label": "Setting 1",
+                "description": "Enables more settings.",
+                "type": "bool",
+                "default_value": false,
+                "settable_per_mesh": false,
+                "settable_per_extruder": false,
+                "settable_per_meshgroup": false,
+                "children":
+                {
+                    "my_plugin_sub_setting_1":
+                    {
+                        "label": "Sub setting 1",
+                        "description": "Disables sub setting 2",
+                        "type": "bool",
+                        "default_value": false,
+                        "enabled": "my_plugin_setting_1"
+                    },
+                    "my_plugin_sub_setting_2":
+                    {
+                        "label": "Sub setting 2",
+                        "description": "Example child.",
+                        "unit": "mm",
+                        "type": "float",
+                        "default_value": 2.5,
+                        "minimum_value": 1,
+                        "enabled": "my_plugin_setting_1 and not my_plugin_sub_setting_1"
+                    }
+                }
+            },
+            "my_plugin_setting_2":
+            {
+                "label": "Example setting 2",
+                "description": "A number.",
+                "type": "float",
+                "default_value": 7
+            }
+        }
+    }
+}
