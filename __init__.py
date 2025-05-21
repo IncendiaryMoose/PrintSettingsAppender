@@ -2,6 +2,7 @@
 
 from . import PrintSettingsAppender
 
+
 def getMetaData():
     return {}
 

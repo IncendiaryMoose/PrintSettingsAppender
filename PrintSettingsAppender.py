@@ -11,8 +11,10 @@ from UM.Settings.DefinitionContainer import DefinitionContainer
 from UM.Settings.SettingRelation import SettingRelation, RelationType
 from cura.CuraApplication import CuraApplication
 
+
 class PrintSettingsAppender(Extension):
-    """Adds all .appendable.json files contained in plugins to cura"""
+    """Extension type plugin that adds all .appendable.json files contained in plugins to cura"""
+    # Extension was chosen over AdditionalSettingsAppender in order to disable the auto-renaming of settings and to allow easier appending of setting relations.
 
     def __init__(self) -> None:
         super().__init__()
@@ -29,11 +31,14 @@ class PrintSettingsAppender(Extension):
         ContainerRegistry.getInstance().containerLoadComplete.connect(self._on_container_loaded)
 
     def _toggle_example(self) -> None:
+        """Toggle state of show example setting"""
         self._show_example = not self._show_example
         self._prefrences.setValue("printsettingappender/show_example", self._show_example)
         Logger.debug(f"Show example is now {self._show_example}")
 
     def _on_plugins_loaded(self) -> None:
+        """Initialization that should take place after all plugins are loaded"""
+        # Wait until plugins are loaded before reading their settings (They could modify or generate them during __init__)
 
         # Search all plugins for .appendable.json files
         plugin_folders = Path(__file__).parents[2]
@@ -42,7 +47,7 @@ class PrintSettingsAppender(Extension):
             for settings_file in plugin.glob("*.appendable.json"):
                 if settings_file.name == "example_settings.appendable.json" and not self._show_example:
                     continue
-                Logger.debug(f"Settings : {settings_file}")
+                Logger.debug(f"Settings found for {plugin_folder.name}: {settings_file}")
                 self.definition_file_paths.append(settings_file)
 
         # Get all settings and setting relations
@@ -64,13 +69,14 @@ class PrintSettingsAppender(Extension):
 
         if isinstance(container, DefinitionContainer) and container.getMetaDataEntry("type") == "machine":
             ##> container is a machine definition container
-            Logger.debug(f"Appending settings to Machine {container.getName()}")
+            Logger.debug(f"Appending settings to Machine: {container.getName()}")
 
-            # Append all plugin settings
+            # Append all plugin settings to the machine definition
+            # All profiles for the machine should inherit from this, so it is only required to add them once per machine
             for settings in self.all_settings:
                 container.appendAdditionalSettingDefinitions(settings)
 
-            # Append all setting relations
+            # Append all setting relations to the containers
             # This is required for setting visibility to update without closing the menu
             for pair in self.relations:
                 try:
@@ -85,10 +91,13 @@ class PrintSettingsAppender(Extension):
                     Logger.error(f"Failed to append {pair} due to {e}")
 
     def _get_all_children(self, key: str, setting: dict[str, str | dict[str, Any]]):
+        """Find all "enabled" tags in a setting and its children and add the requirements for each setting to self.relations"""
+
         if "enabled" in setting:
             ##> Setting depends on another setting for visibility
+            # Add all settings it depends on to self.relations
             requirements = setting["enabled"]
-            requirements_list = requirements.replace(" and ", "|").replace(" or ", "|").split("|") # type: ignore[union-attr]
+            requirements_list = requirements.replace(" and ", "|").replace(" or ", "|").split("|")  # type: ignore[union-attr]
             for index, requirement in enumerate(requirements_list):
                 requirements_list[index] = requirement.removeprefix("not ")
             if not "False" in requirements:
@@ -96,5 +105,6 @@ class PrintSettingsAppender(Extension):
 
         if "children" in setting:
             ##> Setting has child settings
-            for child_key, child in setting["children"].items(): # type: ignore[union-attr]
+            # Search each child
+            for child_key, child in setting["children"].items():  # type: ignore[union-attr]
                 self._get_all_children(child_key, child)
